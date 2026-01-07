@@ -7,8 +7,8 @@ from rest_framework.permissions import IsAdminUser
 from django.contrib.auth import get_user_model
 
 from admin_panel_module.serializers import AdminUserListSerializer
-from product_module.models import Product
-from product_module.serializers import ProductSerializer
+from product_module.models import Product, ProductCategory
+from product_module.serializers import ProductSerializer, ProductCategorySerializer
 
 User = get_user_model()
 
@@ -53,4 +53,16 @@ class ProductListCreateView(generics.ListCreateAPIView):
 class ProductRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class ProductCategoryListCreateView(generics.ListCreateAPIView):
+    queryset = ProductCategory.objects.filter(is_active=True)
+    serializer_class = ProductCategorySerializer
+    permission_classes = [permissions.IsAdminUser]
+
+
+class ProductCategoryRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = ProductCategory.objects.filter(is_active=True)
+    serializer_class = ProductCategorySerializer
     permission_classes = [permissions.IsAdminUser]

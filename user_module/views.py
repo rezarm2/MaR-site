@@ -8,6 +8,7 @@ from django.utils.crypto import get_random_string
 from rest_framework import generics
 from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.views import APIView
+from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -31,23 +32,25 @@ class UserProfileAPIView(RetrieveUpdateAPIView):
 
 
 class ChangePasswordAPIView(APIView):
-    class ChangePasswordAPIView(APIView):
-        permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated]
 
-        def post(self, request):
-            serializer = ChangePasswordSerializer(
-                data=request.data,
-                context={'user': request.user}
-            )
-            serializer.is_valid(raise_exception=True)
-            serializer.save()
-            return Response({"success": 1, "message": "Password changed successfully."}, status.HTTP_200_OK)
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data,
+            context={'user': request.user}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response({"success": 1, "message": "Password changed successfully."}, status.HTTP_200_OK)
 
 
 class RegisterAPIView(APIView):
-    # permission_classes = [AllowAny]
 
     def post(self, request):
+        User = get_user_model()
+        email = request.data.get('email')
+        if User.objects.filter(email=email, is_active=False, activation_code_expiration__lt=timezone.now()).exists():
+            User.objects.filter(email=email, is_active=False, activation_code_expiration__lt=timezone.now()).delete()
         serializer = RegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
@@ -57,7 +60,6 @@ class RegisterAPIView(APIView):
                 'username': user.username,
                 'email': user.email,
                 'phone_number': user.phone_number,
-                'activation_code': user.activation_code
             }
         }, status.HTTP_201_CREATED)
 
@@ -113,11 +115,35 @@ class LoginAPIView(APIView):
             key='access_token',
             value=access_token,
             httponly=True,
-            secure=False,
+            secure=True,
             samesite='Lax'
         )
 
         return response
+
+
+class RefreshTokenView(APIView):
+    def post(self, request):
+        refresh_token = request.COOKIES.get('refresh_token')
+        if not refresh_token:
+            return Response({'error': 'Refresh token not found in cookies.'}, status=400)
+
+        try:
+            refresh = RefreshToken(refresh_token)
+            access_token = str(refresh.access_token)
+
+            response = Response({'success': 1}, status=200)
+            response.set_cookie(
+                key='access_token',
+                value=access_token,
+                httponly=True,
+                secure=True,
+                samesite='Lax',
+                max_age=300
+            )
+            return response
+        except TokenError:
+            return Response({'error': 'Invalid refresh token.'}, status=401)
 
 
 class ForgetPasswordAPIView(APIView):
@@ -128,6 +154,10 @@ class ForgetPasswordAPIView(APIView):
         User = get_user_model()
         email = serializer.validated_data['email']
         user = User.objects.get(email=email)
+
+        if not user.is_active:
+            return Response({'error': 'No user with the entered details was found.'},
+                            status=status.HTTP_400_BAD_REQUEST)
 
         user.activation_code = get_random_string(length=72)
         user.activation_code_expiration = timezone.now() + timedelta(hours=24)
@@ -171,6 +201,7 @@ def reset_password_redirect(request, activation_code):
 
     return HttpResponseRedirect(f"{settings.FRONTEND_URL}/reset-password?code={activation_code}")
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def user_info_view(request):
@@ -182,6 +213,25 @@ def user_info_view(request):
 @permission_classes([IsAuthenticated])
 def logout_view(request):
     response = Response({"success": 1, 'message': 'Logged out successfully'}, status=200)
-    response.delete_cookie('access')
-    response.delete_cookie('refresh')
+    response.set_cookie(
+        key='access_token',
+        value='',
+        max_age=0,
+        expires='Thu, 01 Jan 1970 00:00:00 GMT',
+        path='/',
+        secure=True,
+        httponly=True,
+        samesite='None'
+    )
+
+    response.set_cookie(
+        key='refresh_token',
+        value='',
+        max_age=0,
+        expires='Thu, 01 Jan 1970 00:00:00 GMT',
+        path='/',
+        secure=True,
+        httponly=True,
+        samesite='None'
+    )
     return response

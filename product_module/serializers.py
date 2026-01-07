@@ -14,6 +14,7 @@ class ProductSerializer(serializers.ModelSerializer):
     category_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=ProductCategory.objects.all(), write_only=True, source='categories'
     )
+    is_active = serializers.BooleanField(default=True)
 
     class Meta:
         model = Product

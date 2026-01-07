@@ -16,6 +16,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.filter(is_active=True)
     serializer_class = ProductSerializer
     pagination_class = ProductPaginationViewSet
+    parser_classes = [MultiPartParser, FormParser]
     filter_backends = [filters.SearchFilter]
     search_fields = ['title', 'description', 'categories__title']
 

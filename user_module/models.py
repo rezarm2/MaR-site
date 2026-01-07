@@ -24,3 +24,34 @@ class User(AbstractUser):
         if self.first_name and self.last_name:
             return self.get_full_name()
         return self.email
+
+
+# training------------------------------------------------------
+
+class LeaveRequest(models.Model):
+    LEAVE_TYPE_CHOICES = [
+        ('SICK', 'Sick Leave'),
+        ('ANNUAL', 'Annual Leave'),
+        ('UNPAID', 'Unpaid Leave'),
+    ]
+
+    employee = models.ForeignKey(User, on_delete=models.CASCADE)
+    leave_type = models.CharField(max_length=10, choices=LEAVE_TYPE_CHOICES)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    reason = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+
+class Course(models.Model):
+    title = models.CharField(max_length=100)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    max_students = models.PositiveIntegerField()
+    students_count = models.PositiveIntegerField(default=0)
+
+
+class CourseRegistration(models.Model):
+    student = models.ForeignKey(User, on_delete=models.CASCADE)
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    registered_at = models.DateTimeField(auto_now_add=True)

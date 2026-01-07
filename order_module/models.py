@@ -31,6 +31,8 @@ class OrderDetail(models.Model):
 
     def save(self, *args, **kwargs):
         if self.final_price is None:
+            if not self.product:
+                raise ValueError("Product is required to calculate final_price.")
             self.final_price = self.product.get_final_price()
         super().save(*args, **kwargs)
 

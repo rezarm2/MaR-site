@@ -25,9 +25,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-rc8^&hp^zgpu1r12=ox7*7ly=_w6lm*)l!-uuq5p1#6k$um7b('
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ['api.mander.ir', 'mander.ir', 'localhost', '127.0.0.1', "185.53.143.74"]
+ALLOWED_HOSTS = ['api.mander.ir', 'mander.ir', 'www.api.mander.ir', 'www.mander.ir', 'localhost', '127.0.0.1',
+                 "185.53.143.74"]
 
 # Application definition
 
@@ -53,12 +54,13 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'corsheaders.middleware.CorsMiddleware'
+
 ]
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
@@ -153,6 +155,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 2,
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'utils.authentication.authentication.CookieJWTAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
     # 'DEFAULT_PERMISSION_CLASSES': [
@@ -193,6 +196,7 @@ EMAIL_HOST_USER = config("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = config("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = config("EMAIL_USE_TLS", cast=bool)
 DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL")
+MAILERSEND_API_KEY = 'mlsn.01a3b3301237a05318e8ad90e6b8966d9800b2428f0cbd6c0b488e17cc1af055'
 
 SECURE_SSL_REDIRECT = True
 SESSION_COOKIE_SECURE = True
