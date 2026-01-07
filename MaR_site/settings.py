@@ -90,12 +90,8 @@ WSGI_APPLICATION = 'MaR_site.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'manderir_mar_site_db',
-        'USER': 'manderir_mar_site_user',
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': '127.0.0.200',
-        'PORT': '5432',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
